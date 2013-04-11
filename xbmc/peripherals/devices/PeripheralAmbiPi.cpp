@@ -22,26 +22,24 @@
 #include "PeripheralAmbiPi.h"
 #include "utils/log.h"
 
-#include "cores/VideoRenderers/RenderManager.h"
-#include "cores/VideoRenderers/WinRenderer.h"
+#include "Application.h"
+#include "Screenshot.h"
 
 #define AMBIPI_DEFAULT_PORT 20434
 
-extern CXBMCRenderManager g_renderManager;
+extern CApplication g_application;
 
 using namespace PERIPHERALS;
 using namespace AUTOPTR;
 
 CPeripheralAmbiPi::CPeripheralAmbiPi(const PeripheralType type, const PeripheralBusType busType, const CStdString &strLocation, const CStdString &strDeviceName, int iVendorId, int iProductId) :
   CPeripheral(type, busType, strLocation, strDeviceName, iVendorId, iProductId),
-  CThread("AmbiPi"),
-  m_bStarted(false),
-  m_bIsRunning(false),
   m_pGrid(NULL),
   m_previousImageWidth(0),
   m_previousImageHeight(0)
 {  
   m_features.push_back(FEATURE_AMBIPI);
+  ConfigureRenderCompleteCallback();
 }
 
 CPeripheralAmbiPi::~CPeripheralAmbiPi(void)
@@ -50,12 +48,13 @@ CPeripheralAmbiPi::~CPeripheralAmbiPi(void)
 
   DisconnectFromDevice();
 
+  ReleaseImage();
   delete m_pGrid;
 }
 
 bool CPeripheralAmbiPi::InitialiseFeature(const PeripheralFeature feature)
 {
-  if (feature != FEATURE_AMBIPI || m_bStarted || !GetSettingBool("enabled")) {
+  if (feature != FEATURE_AMBIPI || !GetSettingBool("enabled")) {
     return CPeripheral::InitialiseFeature(feature);
   }
 
@@ -66,15 +65,11 @@ bool CPeripheralAmbiPi::InitialiseFeature(const PeripheralFeature feature)
 
   ConnectToDevice();
 
-  m_bStarted = true;
-  Create();
-
   return CPeripheral::InitialiseFeature(feature);
 }
 
 void CPeripheralAmbiPi::LoadAddressFromConfiguration()
-{
-  
+{ 
   CStdString portFromConfiguration = GetSettingString("port");
 
   int port;
@@ -91,7 +86,6 @@ void CPeripheralAmbiPi::LoadAddressFromConfiguration()
 
 void CPeripheralAmbiPi::UpdateGridFromConfiguration()
 {
-
   unsigned int width = 16;
   unsigned int height = 11;
 
@@ -102,20 +96,14 @@ void CPeripheralAmbiPi::UpdateGridFromConfiguration()
 
 }
 
-bool CPeripheralAmbiPi::ConfigureRenderCallback()
+void CPeripheralAmbiPi::ConfigureRenderCompleteCallback()
 {
-  if (!g_renderManager.IsStarted() || !g_renderManager.IsConfigured()) {
-    return false;
-  }
-
-  g_renderManager.RegisterRenderUpdateCallBack((const void*)this, RenderUpdateCallBack);
-  return true;
+  g_application.RegisterRenderCompleteCallBack((const void*)this, RenderCompleteCallBack);
 }
 
-void CPeripheralAmbiPi::RenderUpdateCallBack(const void *ctx, const CRect &SrcRect, const CRect &DestRect)
+void CPeripheralAmbiPi::RenderCompleteCallBack(const void *ctx)
 {
   CPeripheralAmbiPi *peripheralAmbiPi = (CPeripheralAmbiPi*)ctx;
-
   peripheralAmbiPi->ProcessImage();
 }
 
@@ -126,24 +114,37 @@ void CPeripheralAmbiPi::ProcessImage()
     return;
   }
 
-  UpdateImage();  
+  if (!UpdateImage())
+  {
+      return;  
+  }
+
   GenerateDataStreamFromImage();
   SendData();
 }
 
-void CPeripheralAmbiPi::UpdateImage()
+void CPeripheralAmbiPi::ReleaseImage()
 {
-  CWinRenderer *pRenderer = g_renderManager.m_pRenderer;
-  
-  ZeroMemory(&m_image, sizeof(m_image));
-  int index = pRenderer->GetImage(&m_image);
+  if (!m_screenshotSurface.m_buffer)
+  {
+    return;
+  }
+
+  delete m_screenshotSurface.m_buffer;
+}
+
+bool CPeripheralAmbiPi::UpdateImage()
+{
+  ReleaseImage();
+
+  return m_screenshotSurface.CaptureBufferDuringLock();
 }
 
 void CPeripheralAmbiPi::GenerateDataStreamFromImage()
 {
-  UpdateSampleRectangles(m_image.width, m_image.height);
+  UpdateSampleRectangles(m_screenshotSurface.m_width, m_screenshotSurface.m_height);
 
-  m_pGrid->UpdateTilesFromImage(&m_image);
+  m_pGrid->UpdateTilesFromImage(&m_screenshotSurface);
 }
 
 void CPeripheralAmbiPi::UpdateSampleRectangles(unsigned int imageWidth, unsigned int imageHeight)
@@ -175,39 +176,6 @@ void CPeripheralAmbiPi::ConnectToDevice()
   m_connection.Connect(m_address, m_port);
 }
 
-#define RETRY_DELAY_WHEN_UNCONFIGURED 1
-#define RETRY_DELAY_WHEN_CONFIGURED 5
-
-void CPeripheralAmbiPi::Process(void)
-{
-
-  {
-    CSingleLock lock(m_critSection);
-    m_bIsRunning = true;
-  }
-
-  int retryDelay = RETRY_DELAY_WHEN_UNCONFIGURED;
-
-  while (!m_bStop)
-  {
-    if (!m_bStop) {
-      bool configured = ConfigureRenderCallback();
-      
-      retryDelay = configured ? RETRY_DELAY_WHEN_CONFIGURED : RETRY_DELAY_WHEN_UNCONFIGURED;
-    }
-
-    if (!m_bStop)
-      Sleep(retryDelay * 1000);
-  }
-
-  {
-    CSingleLock lock(m_critSection);
-    m_bStarted = false;
-    m_bIsRunning = false;
-  }
-
-}
-
 void CPeripheralAmbiPi::OnSettingChanged(const CStdString &strChangedSetting)
 {
   CLog::Log(LOGDEBUG, "%s - handling configuration change, setting: '%s'", __FUNCTION__, strChangedSetting.c_str());
@@ -219,15 +187,6 @@ void CPeripheralAmbiPi::OnSettingChanged(const CStdString &strChangedSetting)
 void CPeripheralAmbiPi::DisconnectFromDevice(void)
 {
   CLog::Log(LOGDEBUG, "%s - disconnecting from the AmbiPi", __FUNCTION__);
-  if (IsRunning())
-  {
-    StopThread(true);
-  }
-  m_connection.Disconnect();
-}
 
-bool CPeripheralAmbiPi::IsRunning(void) const
-{
-  CSingleLock lock(m_critSection);
-  return m_bIsRunning;
+  m_connection.Disconnect();
 }
