@@ -31,7 +31,14 @@ public:
   unsigned char* m_buffer;
 
   CScreenshotSurface(void);
-  bool capture( void );
+  bool Capture( void );
+
+  bool CaptureBufferDuringLock( void );
+
+private:
+  void Setup( void );
+  void PostProcessBuffer( void );
+  void Cleanup( void );
 };
 
 class CScreenShot
