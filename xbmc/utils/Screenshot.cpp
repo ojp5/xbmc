@@ -52,12 +52,27 @@ CScreenshotSurface::CScreenshotSurface()
   m_buffer = NULL;
 }
 
-bool CScreenshotSurface::capture()
+bool CScreenshotSurface::Capture()
 {
+  bool success = false;
+  Setup();
+  if (CaptureBufferDuringLock()) 
+  {
+    PostProcessBuffer();
+    success = true;
+  }
+  Cleanup();
+  return success;
+}
 
+void CScreenshotSurface::Setup()
+{
 #ifdef HAS_DX
-  LPDIRECT3DSURFACE9 lpSurface = NULL, lpBackbuffer = NULL;
   g_graphicsContext.Lock();
+#elif defined(HAS_GL) || defined(HAS_GLES)
+  g_graphicsContext.BeginPaint();
+#endif
+
   if (g_application.IsPlayingVideo())
   {
 #ifdef HAS_VIDEO_PLAYBACK
@@ -65,7 +80,13 @@ bool CScreenshotSurface::capture()
 #endif
   }
   g_application.RenderNoPresent();
+}
 
+bool CScreenshotSurface::CaptureBufferDuringLock()
+{
+#ifdef HAS_DX
+  LPDIRECT3DSURFACE9 lpSurface = NULL, lpBackbuffer = NULL;  
+ 
   if (FAILED(g_Windowing.Get3DDevice()->CreateOffscreenPlainSurface(g_Windowing.GetWidth(), g_Windowing.GetHeight(), D3DFMT_X8R8G8B8, D3DPOOL_SYSTEMMEM, &lpSurface, NULL)))
     return false;
 
@@ -99,18 +120,10 @@ bool CScreenshotSurface::capture()
   lpSurface->Release();
   lpBackbuffer->Release();
 
-  g_graphicsContext.Unlock();
+  return true;
 
 #elif defined(HAS_GL) || defined(HAS_GLES)
 
-  g_graphicsContext.BeginPaint();
-  if (g_application.IsPlayingVideo())
-  {
-#ifdef HAS_VIDEO_PLAYBACK
-    g_renderManager.SetupScreenshot();
-#endif
-  }
-  g_application.RenderNoPresent();
 #ifndef HAS_GLES
   glReadBuffer(GL_BACK);
 #endif
@@ -129,9 +142,18 @@ bool CScreenshotSurface::capture()
 #else
   glReadPixels(viewport[0], viewport[1], viewport[2], viewport[3], GL_BGRA, GL_UNSIGNED_BYTE, (GLvoid*)surface);
 #endif
-  g_graphicsContext.EndPaint();
+  return true;
 
-  //make a new buffer and copy the read image to it with the Y axis inverted
+#else
+  //nothing to take a screenshot from
+  return false;
+#endif
+}
+
+void CScreenshotSurface::PostProcessBuffer()
+{
+#if defined(HAS_GL) || defined(HAS_GLES)
+//make a new buffer and copy the read image to it with the Y axis inverted
   m_buffer = new unsigned char[m_stride * m_height];
   for (int y = 0; y < m_height; y++)
   {
@@ -148,19 +170,22 @@ bool CScreenshotSurface::capture()
 
   delete [] surface;
 
-#else
-  //nothing to take a screenshot from
-  return false;
 #endif
-
-  return true;
 }
 
+void CScreenshotSurface::Cleanup()
+{
+#ifdef HAS_DX
+  g_graphicsContext.Unlock();
+#elif defined(HAS_GL) || defined(HAS_GLES)
+  g_graphicsContext.EndPaint();
+#endif
+}
 void CScreenShot::TakeScreenshot(const CStdString &filename, bool sync)
 {
 
   CScreenshotSurface surface;
-  if (!surface.capture())
+  if (!surface.Capture())
   {
     CLog::Log(LOGERROR, "Screenshot %s failed", filename.c_str());
     return;
