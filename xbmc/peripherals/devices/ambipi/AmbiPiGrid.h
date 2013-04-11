@@ -22,7 +22,7 @@
 
 #include "system.h"
 
-#include "Screenshot.h"
+#include "utils/Screenshot.h"
 #include "guilib/Geometry.h"
 
 #include "cores/VideoRenderers/BaseRenderer.h"
