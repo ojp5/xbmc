@@ -82,6 +82,6 @@ namespace PERIPHERALS
     unsigned long int CalculatePixelsInTile(Tile *pTile);
     void CalculateAverageColorForTile(const CScreenshotSurface* pSurface, Tile *pTile);
     void UpdateAverageColorForTile(Tile *pTile, const AverageRGB *pAverageRgb);
-    void UpdateAverageRgb(const RGB *pRgb, unsigned long int numPixels, AverageRGB *pAverageRgb);
+    void UpdateAverageRgb(const RGB *pRgb, unsigned long int totalSamples, AverageRGB *pAverageRgb);
   };
 }
