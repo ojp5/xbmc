@@ -31,7 +31,7 @@ using namespace AUTOPTR;
 
 
 CAmbiPiConnection::CAmbiPiConnection(void) :
-  CThread("AmbiPi"),
+  CThread("AmbiPiConnection"),
   m_socket(INVALID_SOCKET),
   m_bConnected(false),
   m_bConnecting(false)
