@@ -36,7 +36,8 @@ CPeripheralAmbiPi::CPeripheralAmbiPi(const PeripheralType type, const Peripheral
   CPeripheral(type, busType, strLocation, strDeviceName, iVendorId, iProductId),
   m_pGrid(NULL),
   m_previousImageWidth(0),
-  m_previousImageHeight(0)
+  m_previousImageHeight(0),
+  m_lastFrameTime(0)
 {  
   m_features.push_back(FEATURE_AMBIPI);
   ConfigureRenderCompleteCallback();
@@ -104,20 +105,36 @@ void CPeripheralAmbiPi::ConfigureRenderCompleteCallback()
 void CPeripheralAmbiPi::RenderCompleteCallBack(const void *ctx)
 {
   CPeripheralAmbiPi *peripheralAmbiPi = (CPeripheralAmbiPi*)ctx;
+
   peripheralAmbiPi->ProcessImage();
+}
+
+#define MAX_FRAMES_PER_SECOND 30
+#define MIN_FRAME_DELAY (1000 / MAX_FRAMES_PER_SECOND)
+
+bool CPeripheralAmbiPi::ShouldProcessImage()
+{
+  unsigned int now = XbmcThreads::SystemClockMillis();
+  bool shouldProcess = now > m_lastFrameTime + MIN_FRAME_DELAY;
+
+  if (shouldProcess) {
+    m_lastFrameTime = now;
+  }
+
+  return shouldProcess;
 }
 
 void CPeripheralAmbiPi::ProcessImage()
 {
-  if (!m_connection.IsConnected())
-  {
+
+  if (!ShouldProcessImage()) 
     return;
-  }
+
+  if (!m_connection.IsConnected())
+    return;
 
   if (!UpdateImage())
-  {
-      return;  
-  }
+    return;  
 
   GenerateDataStreamFromImage();
   SendData();
@@ -126,9 +143,7 @@ void CPeripheralAmbiPi::ProcessImage()
 void CPeripheralAmbiPi::ReleaseImage()
 {
   if (!m_screenshotSurface.m_buffer)
-  {
     return;
-  }
 
   delete m_screenshotSurface.m_buffer;
 }
@@ -164,7 +179,6 @@ void CPeripheralAmbiPi::SendData(void) {
     m_connection.Send(pTileData->stream, pTileData->streamLength);
   } catch (std::exception) {
     CLog::Log(LOGINFO, "%s - Send exception", __FUNCTION__);  
-    // TODO reconnect?
   }
 }
 
