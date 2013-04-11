@@ -247,12 +247,11 @@ void CAmbiPiGrid::CalculateAverageColorForTile(const CScreenshotSurface* pSurfac
 {
   AverageRGB averageRgb = { 0, 0, 0 };
   RGB rgb;
-  unsigned long int samplesToTake = CalculatePixelsInTile(pTile) / 2;
-  unsigned long int samplesTaken = 0;
+  unsigned long int samplesToTake = CalculatePixelsInTile(pTile) / STEP;
 
   for (int y = (int)pTile->m_sampleRect.y1; y < pTile->m_sampleRect.y2; y++)
   {
-    for (int x = (int)pTile->m_sampleRect.x1; x < pTile->m_sampleRect.x2; x += 2)
+    for (int x = (int)pTile->m_sampleRect.x1; x < pTile->m_sampleRect.x2; x += STEP)
     {
       BGRA *pPixel = (BGRA *)(pSurface->m_buffer) + (y * pSurface->m_width) + x;
 
@@ -262,14 +261,7 @@ void CAmbiPiGrid::CalculateAverageColorForTile(const CScreenshotSurface* pSurfac
 
       UpdateAverageRgb(&rgb, samplesToTake, &averageRgb);
 
-      samplesTaken++;
     }
-  }
-
-  int samplesMissed = samplesToTake - samplesTaken;
-  if (samplesMissed)
-  {
-    CLog::Log(LOGERROR, "%s - failed to calculate samplesToTake correctly, delta: %d", __FUNCTION__, samplesMissed);
   }
 
   UpdateAverageColorForTile(pTile, &averageRgb);
