@@ -135,6 +135,7 @@ void CPeripheralAmbiPi::UpdateImage()
 {
   CWinRenderer *pRenderer = g_renderManager.m_pRenderer;
   
+  ZeroMemory(&m_image, sizeof(m_image));
   int index = pRenderer->GetImage(&m_image);
 }
 
