@@ -27,14 +27,14 @@
 using namespace PERIPHERALS;
 
 CPeripheralBusIP::CPeripheralBusIP(CPeripherals *manager) :
-    CPeripheralBus(manager, PERIPHERAL_BUS_IP)
+  CPeripheralBus(manager, PERIPHERAL_BUS_IP)
 {
   m_bNeedsPolling = false;
 }
 
 bool CPeripheralBusIP::PerformDeviceScan(PeripheralScanResults &results)
 {
-  detectAmbiPi(results);
+	detectAmbiPi(results);
 	return true;
 }
 
@@ -56,14 +56,14 @@ bool CPeripheralBusIP::alreadyExistsOnPath(const CStdString& devicePath, Periphe
 
 void CPeripheralBusIP::addAmbiPiResult(const CStdString& devicePath, PeripheralScanResults &results)
 {
-    PeripheralScanResult result;
-    result.m_strLocation  = devicePath;
-    result.m_type         = PERIPHERAL_AMBIPI;
-    result.m_iVendorId    = 0;
-    result.m_iProductId   = 0;
+  PeripheralScanResult result;
+  result.m_strLocation  = devicePath;
+  result.m_type         = PERIPHERAL_AMBIPI;
+  result.m_iVendorId    = 0;
+  result.m_iProductId   = 0;
 
-    if (results.ContainsResult(result))
+  if (results.ContainsResult(result))
 		return;
 
-    results.m_results.push_back(result);
+  results.m_results.push_back(result);
 }
