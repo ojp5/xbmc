@@ -55,7 +55,7 @@ TileData *CAmbiPiGrid::GetTileData(void)
 
   ZeroMemory(pStream, m_tileData.streamLength);
 
-  unsigned int tileIndex = 0;
+  int tileIndex = m_numTiles - 1;
   Tile* pTile;
 
   *pStream++ = (BYTE) (m_tileData.streamLength >> 24 & 0xFF);
@@ -63,7 +63,7 @@ TileData *CAmbiPiGrid::GetTileData(void)
   *pStream++ = (BYTE) (m_tileData.streamLength >> 8 & 0xFF);
   *pStream++ = (BYTE) (m_tileData.streamLength >> 0 & 0xFF);
 
-  while (tileIndex < m_numTiles) {
+  while (tileIndex >= 0) {
     pTile = m_tiles + tileIndex;
 
     *pStream++ = (BYTE)pTile->m_x;
@@ -73,7 +73,7 @@ TileData *CAmbiPiGrid::GetTileData(void)
     *pStream++ = pTile->m_rgb.g;
     *pStream++ = pTile->m_rgb.b;
 
-    tileIndex++;
+    tileIndex--;
   }  
 
   unsigned int bytesAddedToStream = pStream - m_tileData.stream;
