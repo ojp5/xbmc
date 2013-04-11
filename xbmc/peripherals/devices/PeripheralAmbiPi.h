@@ -64,8 +64,10 @@ namespace PERIPHERALS
     CAmbiPiGrid*                      m_pGrid;
     unsigned int                      m_previousImageWidth;
     unsigned int                      m_previousImageHeight;
+    unsigned int                      m_lastFrameTime;
 
     static void RenderCompleteCallBack(const void *ctx);
+    bool ShouldProcessImage();
 
     void UpdateSampleRectangles(unsigned int imageWidth, unsigned int imageHeight);
     CAmbiPiConnection                 m_connection;
