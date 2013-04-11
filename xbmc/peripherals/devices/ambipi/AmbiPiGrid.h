@@ -70,12 +70,16 @@ namespace PERIPHERALS
     Tile* m_tiles;
     TileData m_tileData;
 
-    void UpdateTileCoordinates(unsigned int width, unsigned int height);    
 
   private:
-    unsigned long int CalculatePixelsInTile(Tile *pTile);
+    void UpdateTileCoordinates(unsigned int width, unsigned int height);    
     void UpdateSingleTileCoordinates(unsigned int leftTileIndex, unsigned int x, unsigned int y);
     void DumpCoordinates(void);
+
+    void DetermineSampleRectangle(Tile *pTile, unsigned int imageWidth, unsigned int imageHeight, unsigned int sampleWidth, unsigned int sampleHeight);
+    void GrowSampleRectangleInwards(Tile *pTile, unsigned int sampleWidth, unsigned int sampleHeight);
+
+    unsigned long int CalculatePixelsInTile(Tile *pTile);
     void CalculateAverageColorForTile(const CScreenshotSurface* pSurface, Tile *pTile);
     void UpdateAverageColorForTile(Tile *pTile, const AverageRGB *pAverageRgb);
     void UpdateAverageRgb(const RGB *pRgb, unsigned long int numPixels, AverageRGB *pAverageRgb);
