@@ -86,8 +86,8 @@ void CPeripheralAmbiPi::LoadAddressFromConfiguration()
 
 void CPeripheralAmbiPi::UpdateGridFromConfiguration()
 {
-  unsigned int width = 16;
-  unsigned int height = 11;
+  unsigned int width = 16 * 2;
+  unsigned int height = 11 * 2;
 
   if (m_pGrid)
     delete m_pGrid;
