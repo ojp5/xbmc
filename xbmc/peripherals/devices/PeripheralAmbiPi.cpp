@@ -23,7 +23,7 @@
 #include "utils/log.h"
 
 #include "Application.h"
-#include "Screenshot.h"
+#include "utils/Screenshot.h"
 
 #define AMBIPI_DEFAULT_PORT 20434
 
