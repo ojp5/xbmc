@@ -47,7 +47,7 @@ namespace PERIPHERALS
     struct addrinfo *GetAddressInfo(const CStdString ip_address_or_name, unsigned int port);
 
     void AttemptConnection(void);
-    void AttemptConnection(struct addrinfo *pAddressInfo);
+    void SelectAddress(void);
 
     AUTOPTR::CAutoPtrSocket           m_socket;
     CStdString                        m_ip_address_or_name;
@@ -56,5 +56,8 @@ namespace PERIPHERALS
     bool                              m_bConnected;
     bool                              m_bConnecting;
     CCriticalSection                  m_critSection;
+
+    struct sockaddr *m_pSelectedAddress;
+    struct addrinfo *m_pAddressInfo;
   };
 }
