@@ -180,12 +180,8 @@ void CAmbiPiGrid::UpdateSampleRectangles(unsigned int imageWidth, unsigned int i
 
     pTile = m_tiles + tileIndex;
 
-    pTile->m_sampleRect.SetRect(
-      (float)pTile->m_x * sampleWidth,
-      (float)pTile->m_y * sampleHeight,
-      (float)std::min(imageWidth, (pTile->m_x * sampleWidth) + sampleWidth),
-      (float)std::min(imageHeight, (pTile->m_y * sampleHeight) + sampleHeight)
-    );
+    DetermineSampleRectangle(pTile, imageWidth, imageHeight, sampleWidth, sampleHeight);
+    GrowSampleRectangleInwards(pTile, sampleWidth, sampleHeight);
 
     CLog::Log(LOGDEBUG, "%s - updated rectangle, x: %d, y: %d, rect: (left: %f, top: %f, right: %f, bottom: %f)",
       __FUNCTION__, 
@@ -198,6 +194,33 @@ void CAmbiPiGrid::UpdateSampleRectangles(unsigned int imageWidth, unsigned int i
     );  
 
     tileIndex++;
+  }
+}
+
+void CAmbiPiGrid::DetermineSampleRectangle(Tile *pTile, unsigned int imageWidth, unsigned int imageHeight, unsigned int sampleWidth, unsigned int sampleHeight)
+{
+  pTile->m_sampleRect.SetRect(
+    (float)pTile->m_x * sampleWidth,
+    (float)pTile->m_y * sampleHeight,
+    (float)std::min(imageWidth, (pTile->m_x * sampleWidth) + sampleWidth),
+    (float)std::min(imageHeight, (pTile->m_y * sampleHeight) + sampleHeight)
+  );
+}
+
+void CAmbiPiGrid::GrowSampleRectangleInwards(Tile *pTile, unsigned int sampleWidth, unsigned int sampleHeight)
+{
+  int multiplier = 2;
+
+  if (pTile->m_y == 0) {
+    pTile->m_sampleRect.y2 += (sampleHeight * multiplier);
+  } else if (pTile->m_y == m_height - 1) {
+    pTile->m_sampleRect.y1 -= (sampleHeight * multiplier);
+  }
+
+  if (pTile->m_x == 0) {
+    pTile->m_sampleRect.x2 += (sampleWidth * multiplier);
+  } else if (pTile->m_x == m_width - 1) {
+    pTile->m_sampleRect.x1 -= (sampleWidth * multiplier);
   }
 }
 
