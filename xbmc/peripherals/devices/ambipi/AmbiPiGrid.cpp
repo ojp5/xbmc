@@ -241,20 +241,18 @@ void CAmbiPiGrid::UpdateTilesFromImage(const CScreenshotSurface* pSurface)
   }  
 }
 
-unsigned long int CAmbiPiGrid::CalculatePixelsInTile(Tile *pTile) 
-{
-  return (unsigned long int)((pTile->m_sampleRect.y2 - pTile->m_sampleRect.y1) * (pTile->m_sampleRect.x2 - pTile->m_sampleRect.x1));
-}
+#define STEP 2
 
 void CAmbiPiGrid::CalculateAverageColorForTile(const CScreenshotSurface* pSurface, Tile *pTile) 
 {
   AverageRGB averageRgb = { 0, 0, 0 };
   RGB rgb;
-  unsigned long int pixelsInTile = CalculatePixelsInTile(pTile);
+  unsigned long int samplesToTake = CalculatePixelsInTile(pTile) / 2;
+  unsigned long int samplesTaken = 0;
 
   for (int y = (int)pTile->m_sampleRect.y1; y < pTile->m_sampleRect.y2; y++)
   {
-    for (int x = (int)pTile->m_sampleRect.x1; x < pTile->m_sampleRect.x2; x++)
+    for (int x = (int)pTile->m_sampleRect.x1; x < pTile->m_sampleRect.x2; x += 2)
     {
       BGRA *pPixel = (BGRA *)(pSurface->m_buffer) + (y * pSurface->m_width) + x;
 
@@ -262,12 +260,20 @@ void CAmbiPiGrid::CalculateAverageColorForTile(const CScreenshotSurface* pSurfac
       rgb.g = pPixel->g;
       rgb.b = pPixel->b;
 
-      UpdateAverageRgb(&rgb, pixelsInTile, &averageRgb);
+      UpdateAverageRgb(&rgb, samplesToTake, &averageRgb);
+
+      samplesTaken++;
     }
   }
 
+  int samplesMissed = samplesToTake - samplesTaken;
+  if (samplesMissed)
+  {
+    CLog::Log(LOGERROR, "%s - failed to calculate samplesToTake correctly, delta: %d", __FUNCTION__, samplesMissed);
+  }
+
   UpdateAverageColorForTile(pTile, &averageRgb);
-#if 1
+#if 0
   CLog::Log(LOGDEBUG, "%s - average color for tile, x: %d, y: %d, RGB: #%02x%02x%02x",
     __FUNCTION__, 
     pTile->m_x, 
@@ -279,11 +285,16 @@ void CAmbiPiGrid::CalculateAverageColorForTile(const CScreenshotSurface* pSurfac
 #endif
 }
 
-void CAmbiPiGrid::UpdateAverageRgb(const RGB *pRgb, unsigned long int numPixels, AverageRGB *pAverageRgb)
+unsigned long int CAmbiPiGrid::CalculatePixelsInTile(Tile *pTile) 
 {
-  pAverageRgb->r += ((float)pRgb->r / numPixels);
-  pAverageRgb->g += ((float)pRgb->g / numPixels);
-  pAverageRgb->b += ((float)pRgb->b / numPixels);
+  return (unsigned long int)((pTile->m_sampleRect.y2 - pTile->m_sampleRect.y1) * (pTile->m_sampleRect.x2 - pTile->m_sampleRect.x1));
+}
+
+void CAmbiPiGrid::UpdateAverageRgb(const RGB *pRgb, unsigned long int totalSamples, AverageRGB *pAverageRgb)
+{
+  pAverageRgb->r += ((float)pRgb->r / totalSamples);
+  pAverageRgb->g += ((float)pRgb->g / totalSamples);
+  pAverageRgb->b += ((float)pRgb->b / totalSamples);
 }
 
 void CAmbiPiGrid::UpdateAverageColorForTile(Tile *pTile, const AverageRGB *pAverageRgb)
