@@ -260,7 +260,6 @@ void CAmbiPiGrid::CalculateAverageColorForTile(const CScreenshotSurface* pSurfac
       rgb.b = pPixel->b;
 
       UpdateAverageRgb(&rgb, samplesToTake, &averageRgb);
-
     }
   }
 
