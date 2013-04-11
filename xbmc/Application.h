@@ -104,6 +104,8 @@ protected:
   int       m_iPlayList;
 };
 
+typedef void (*RenderCompleteCallBackFn)(const void *ctx);
+
 class CApplication : public CXBApplicationEx, public IPlayerCallback, public IMsgTargetCallback
 {
 public:
@@ -260,6 +262,8 @@ public:
 
   void UpdateLibraries();
   void CheckMusicPlaylist();
+
+  void RegisterRenderCompleteCallBack(const void *ctx, RenderCompleteCallBackFn fn);
 
   bool ExecuteXBMCAction(std::string action);
 
@@ -429,6 +433,9 @@ protected:
 
   VIDEO::CVideoInfoScanner *m_videoInfoScanner;
   MUSIC_INFO::CMusicInfoScanner *m_musicInfoScanner;
+
+  const void* m_RenderCompleteCallBackCtx;
+  RenderCompleteCallBackFn m_RenderCompleteCallBackFn;
 
   void Mute();
   void UnMute();
