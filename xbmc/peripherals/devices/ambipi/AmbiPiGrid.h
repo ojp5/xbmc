@@ -22,35 +22,31 @@
 
 #include "system.h"
 
+#include "Screenshot.h"
 #include "guilib/Geometry.h"
 
 #include "cores/VideoRenderers/BaseRenderer.h"
 
 namespace PERIPHERALS
 {
-  struct AverageYUV {
-    float y,u,v;
-  };
-
   struct AverageRGB {
     float r,g,b;
-  };
-
-  struct YUV {
-    BYTE y,u,v;
   };
 
   struct RGB {
     BYTE r,g,b;
   };
 
+  struct BGRA {
+    BYTE b,g,r,a;
+  };
 
   struct Tile
   {
     unsigned int      m_x;
     unsigned int      m_y;
     CRect             m_sampleRect;
-    YUV               m_yuv;
+    RGB               m_rgb;
   };
 
   struct TileData {
@@ -64,7 +60,7 @@ namespace PERIPHERALS
     CAmbiPiGrid(unsigned int width, unsigned int height);
     ~CAmbiPiGrid(void);
     void UpdateSampleRectangles(unsigned int imageWidth, unsigned int imageHeight);
-    void UpdateTilesFromImage(const YV12Image* pImage);
+    void UpdateTilesFromImage(const CScreenshotSurface* pImage);
     TileData *GetTileData(void);
 
   protected:
@@ -77,17 +73,11 @@ namespace PERIPHERALS
     void UpdateTileCoordinates(unsigned int width, unsigned int height);    
 
   private:
+    unsigned long int CalculatePixelsInTile(Tile *pTile);
     void UpdateSingleTileCoordinates(unsigned int leftTileIndex, unsigned int x, unsigned int y);
     void DumpCoordinates(void);
-    void CalculateAverageColorForTile(const YV12Image* pImage, Tile *pTile);
-    void UpdateAverageColorForTile(Tile *pTile, const AverageYUV *pAverageYuv);
-    void UpdateAverageYuv(const YUV *pYuv, unsigned long int numPixels, AverageYUV *pAverageYuv);
+    void CalculateAverageColorForTile(const CScreenshotSurface* pSurface, Tile *pTile);
+    void UpdateAverageColorForTile(Tile *pTile, const AverageRGB *pAverageRgb);
     void UpdateAverageRgb(const RGB *pRgb, unsigned long int numPixels, AverageRGB *pAverageRgb);
-  };
-
-  class CImageConversion
-  {
-  public:
-    static void ConvertYuvToRgb(const YUV *pYuv, RGB *pRgb);
   };
 }
