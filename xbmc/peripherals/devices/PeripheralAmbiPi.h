@@ -31,7 +31,7 @@
 namespace PERIPHERALS
 {
 
-  class CPeripheralAmbiPi : public CPeripheral, private CThread
+  class CPeripheralAmbiPi : public CPeripheral
   {
   public:
     CPeripheralAmbiPi(const PeripheralType type, const PeripheralBusType busType, const CStdString &strLocation, const CStdString &strDeviceName, int iVendorId, int iProductId);
@@ -46,30 +46,26 @@ namespace PERIPHERALS
     void DisconnectFromDevice(void);
 
     void LoadAddressFromConfiguration(void);
-    bool ConfigureRenderCallback(void);
-
-    void Process(void);
-    bool IsRunning(void) const;
+    void ConfigureRenderCompleteCallback(void);
 
     void ProcessImage(void);
-    void UpdateImage(void);
+    bool UpdateImage(void);
+    void ReleaseImage(void);
     void GenerateDataStreamFromImage(void);
     void UpdateGridFromConfiguration(void);
     void SendData(void);
 
-    bool                              m_bStarted;
-    bool                              m_bIsRunning;
     int                               m_port;
     CStdString                        m_address;
 
   private:
     CCriticalSection                  m_critSection;
-    YV12Image                         m_image;    
+    CScreenshotSurface                m_screenshotSurface;
     CAmbiPiGrid*                      m_pGrid;
     unsigned int                      m_previousImageWidth;
     unsigned int                      m_previousImageHeight;
 
-    static void RenderUpdateCallBack(const void *ctx, const CRect &SrcRect, const CRect &DestRect);
+    static void RenderCompleteCallBack(const void *ctx);
 
     void UpdateSampleRectangles(unsigned int imageWidth, unsigned int imageHeight);
     CAmbiPiConnection                 m_connection;
