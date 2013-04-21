@@ -267,7 +267,7 @@ CPeripheral *CPeripherals::CreatePeripheral(CPeripheralBus &bus, const Periphera
     break;
     
   case PERIPHERAL_AMBIPI:
-    peripheral = new CPeripheralAmbiPi(type, bus.Type(), strLocation, strDeviceName, iVendorId, iProductId);
+    peripheral = new CPeripheralAmbiPi(mappedResult);
     break;
 
   case PERIPHERAL_TUNER:
