@@ -34,7 +34,7 @@ namespace PERIPHERALS
   class CPeripheralAmbiPi : public CPeripheral
   {
   public:
-    CPeripheralAmbiPi(const PeripheralType type, const PeripheralBusType busType, const CStdString &strLocation, const CStdString &strDeviceName, int iVendorId, int iProductId);
+    CPeripheralAmbiPi(PeripheralScanResult& scanResult);
     virtual ~CPeripheralAmbiPi(void);
 
     void OnSettingChanged(const CStdString &strChangedSetting);
