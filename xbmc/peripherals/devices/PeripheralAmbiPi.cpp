@@ -32,8 +32,8 @@ extern CApplication g_application;
 using namespace PERIPHERALS;
 using namespace AUTOPTR;
 
-CPeripheralAmbiPi::CPeripheralAmbiPi(const PeripheralType type, const PeripheralBusType busType, const CStdString &strLocation, const CStdString &strDeviceName, int iVendorId, int iProductId) :
-  CPeripheral(type, busType, strLocation, strDeviceName, iVendorId, iProductId),
+CPeripheralAmbiPi::CPeripheralAmbiPi(PeripheralScanResult& scanResult) :
+  CPeripheral(scanResult),
   m_pGrid(NULL),
   m_previousImageWidth(0),
   m_previousImageHeight(0),
