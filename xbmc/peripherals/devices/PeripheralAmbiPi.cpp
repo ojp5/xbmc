@@ -34,8 +34,8 @@ extern CXBMCRenderManager g_renderManager;
 
 using namespace PERIPHERALS;
 
-CPeripheralAmbiPi::CPeripheralAmbiPi(const PeripheralType type, const PeripheralBusType busType, const CStdString &strLocation, const CStdString &strDeviceName, int iVendorId, int iProductId) :
-  CPeripheral(type, busType, strLocation, strDeviceName, iVendorId, iProductId),
+CPeripheralAmbiPi::CPeripheralAmbiPi(PeripheralScanResult& scanResult) :
+  CPeripheral(scanResult),
   CThread("AmbiPi"),
   m_bStarted(false),
   m_bIsRunning(false),
