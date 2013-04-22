@@ -63,7 +63,7 @@ namespace PERIPHERALS
   class CPeripheralAmbiPi : public CPeripheral, private CThread
   {
   public:
-    CPeripheralAmbiPi(const PeripheralType type, const PeripheralBusType busType, const CStdString &strLocation, const CStdString &strDeviceName, int iVendorId, int iProductId);
+    CPeripheralAmbiPi(PeripheralScanResult& scanResult);
     virtual ~CPeripheralAmbiPi(void);
 
   protected:
